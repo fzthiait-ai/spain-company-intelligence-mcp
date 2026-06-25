@@ -1,0 +1,27 @@
+name: spain-company-intelligence
+displayName: Spain Company Intelligence (BORME)
+description: >
+  Search 2.8M Spanish companies from the official BORME registry.
+  Look up company profiles, current directors, corporate acts, and personal positions.
+  All data is public domain (CC BY 4.0) from official Spanish government sources.
+  No API key required.
+version: 1.0.0
+author: fzth.ia.it@gmail.com
+license: MIT
+categories:
+  - data
+  - business
+  - legal
+tags:
+  - spain
+  - borme
+  - company-registry
+  - directors
+  - due-diligence
+  - kyc
+  - registro-mercantil
+startCommand:
+  type: stdio
+  command: python3
+  args:
+    - server.py
