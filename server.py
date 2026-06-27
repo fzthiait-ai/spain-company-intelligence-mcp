@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """Spain Company Intelligence MCP Server — powered by OpenMercantil & BORME."""
+import os
 import httpx
 from mcp.server.fastmcp import FastMCP
 
 BASE = "https://openmercantil.es/api/v1"
 BORME_API = "https://www.boe.es/datosabiertos/api/borme/sumario"
+HTTP_PATH = os.getenv("MCP_HTTP_PATH", "/mcp/borme")
+HTTP_PORT = int(os.getenv("MCP_HTTP_PORT", "8091"))
 
 mcp = FastMCP(
     "Spain Company Intelligence",
@@ -14,6 +17,10 @@ mcp = FastMCP(
         "All data is public domain (CC BY 4.0) from official Spanish government sources. "
         "Use buscar_empresa first to get the slug, then use other tools with that slug."
     ),
+    host="0.0.0.0",
+    port=HTTP_PORT,
+    streamable_http_path=HTTP_PATH,
+    stateless_http=True,
 )
 
 
@@ -223,5 +230,30 @@ def borme_diario(fecha: str) -> dict:
     }
 
 
+
+
+class _AcceptPatchMiddleware:
+    """Injects text/event-stream into Accept header so MCPize can discover tools."""
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http":
+            headers = [(k, v) for k, v in scope.get("headers", []) if k.lower() != b"accept"]
+            raw = dict(scope.get("headers", [])).get(b"accept", b"")
+            accept = raw.decode("latin-1")
+            if "text/event-stream" not in accept:
+                accept = (accept + ", text/event-stream") if accept else "application/json, text/event-stream"
+            headers.append((b"accept", accept.encode("latin-1")))
+            scope = {**scope, "headers": headers}
+        await self.app(scope, receive, send)
+
 if __name__ == "__main__":
-    mcp.run(transport="stdio")
+    default_transport = "streamable-http" if os.getenv("PORT") else "stdio"
+    transport = os.getenv("MCP_TRANSPORT", default_transport)
+    if transport == "streamable-http":
+        import uvicorn
+        wrapped = _AcceptPatchMiddleware(mcp.streamable_http_app())
+        uvicorn.run(wrapped, host="0.0.0.0", port=HTTP_PORT, log_level="warning")
+    else:
+        mcp.run(transport=transport)
