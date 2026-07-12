@@ -1,0 +1,53 @@
+openapi: 3.0.0
+info:
+  title: Spain BORME Company Registry
+  description: Search and retrieve information about 2.8M Spanish companies from the official BORME registry. Get company profiles, directors, corporate acts, and tax IDs. Real-time data from Spain's official business registry.
+  version: 1.0.0
+  contact:
+    email: fzth.ia.it@gmail.com
+  x-providerName: rapidapi.com
+  x-serviceName: spain-borme-company-registry
+servers:
+  - url: https://spain-borme-company-registry.p.rapidapi.com
+paths:
+  /company/search:
+    get:
+      summary: Search companies by name or CIF tax ID
+      operationId: searchCompanies
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Company name or CIF number
+        - name: X-RapidAPI-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of matching Spanish companies
+          content:
+            application/json:
+              schema:
+                type: object
+  /company/{id}:
+    get:
+      summary: Get full company profile with directors and corporate acts
+      operationId: getCompany
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: X-RapidAPI-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Company profile
